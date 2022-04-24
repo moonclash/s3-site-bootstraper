@@ -1,0 +1,42 @@
+version: 2.1
+
+orbs: 
+  node: circleci/node@5.0.2
+
+executors:
+  aws-executor:
+    docker:
+      - image: amazon/aws-cli
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
+    working_directory: ../dist 
+
+jobs:
+  build-assets:
+    docker:
+      - image: "cimg/base:stable"
+    steps:
+      - checkout
+      - node/install:
+          install-yarn: true
+          node-version: "16.3"
+      - run:
+          name: "build dist files"
+          command: yarn && yarn build
+
+  upload-to-s3:
+    executor: aws-executor
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: "Upload content"
+          command: aws s3 sync ./dist** s3://$S3_BUCKET/
+
+workflows:
+  upload-content-to-bucket:
+    jobs:
+      - build-assets
+      - upload-to-s3
