@@ -2,9 +2,7 @@ const showdown = require('showdown');
 const fs = require('fs');
 
 const converter = new showdown.Converter();
-converter.setOption('completeHTMLDocument', true);
 const sourcePaths = fs.readdirSync('src/posts');
-const styleTag = '<link rel="stylesheet" type="text/css" href="../../styles/main.css"><link>';
 
 sourcePaths.forEach(path => {
     fs.mkdir(`dist/posts/${path}`, {recursive: true}, (error, _) => {
@@ -16,8 +14,9 @@ sourcePaths.forEach(path => {
         if (error) {
             throw new Error();
         }
-        let html = converter.makeHtml(data, {completeHTMLDocument: true});
-        html = html.replace(/(?<=<meta charset="utf-8">)\n/gi, styleTag);
+        let html = converter.makeHtml(data);
+        const skeletonHTML = fs.readFileSync('src/blog-skeleton.html', 'utf-8');
+        html = skeletonHTML.replace(/<!-- blog content goes here -->/gi, html);
         fs.writeFile(`dist/posts/${path}/index.html`, html, 'utf-8', (err, data) => {
             if (error) {
                 throw new Error();
